@@ -39,11 +39,11 @@ class Game():
                     pygame.quit()
                     sys.exit()
         return change_to
-
+    '''
     def refresh_screen(self, score): # задаем фпс
         pygame.display.flip()
         game.fps_controller.tick(25)
-
+    '''
     def show_score(self, choice=1): # отображение результата
         s_font = pygame.font.SysFont("calibri", 46)
         s_surf = s_font.render("Score: {0}".format(self.score), True, self.fon)
@@ -75,7 +75,7 @@ class Snake():
         self.direction = "RIGHT" # начальное направление движения
         self.change_to = self.direction  # куда будет меняться напрвление движения змеи при нажатии соответствующих клавиш
 
-    def validate_direction_and_change(self): # зменияем направление движения змеи только в том случае, если оно не прямо противоположно текущему
+    def validate_direction_and_change(self): # заменияем направление движения змеи только в том случае, если оно не прямо противоположно текущему
         if any((self.change_to == "RIGHT" and not self.direction == "LEFT", self.change_to == "LEFT" and not self.direction == "RIGHT",
             self.change_to == "UP" and not self.direction == "DOWN", self.change_to == "DOWN" and not self.direction == "UP")):
             self.direction = self.change_to
@@ -123,45 +123,95 @@ class Food():
     def draw_food(self, play_surface): # Отображение еды
         pygame.draw.rect(play_surface, self.food_color, pygame.Rect(self.food_pos[0], self.food_pos[1],self.food_size_x, self.food_size_y))
 
-size = width, height = (600, 400)
-screen = pygame.display.set_mode(size)
-pygame.init()
-
 def start_screen(): # рисуем заставку
     screen.fill((0, 0, 0))
+    GREEN = (0, 51, 51)
     pygame.display.set_caption("Game snake")
     font = pygame.font.SysFont("monaco", 35)
     screen.blit(font.render("Привет! Давай начнем игру!", True, (123, 104, 238)), (150, 40))
     pygame.draw.rect(screen, (0, 51, 51), (130, 30, 370, 50), 1)
-    level_1 = pygame.draw.rect(screen, (0, 51, 51), (250, 90, 130, 40))
+    level_1 = pygame.Rect(250, 90, 130, 40)
+    pygame.draw.rect(screen, GREEN, level_1)
     screen.blit(font.render("Легкий", True, (255, 0, 0)), (275, 100, 100, 40))
-    level_2 = pygame.draw.rect(screen, (0, 51, 51), (250, 150, 130, 40))
+    level_2 = pygame.Rect(250, 150, 130, 40)
+    pygame.draw.rect(screen, GREEN, level_2)
     screen.blit(font.render("Средний", True, (255, 0, 0)), (260, 160, 100, 40))
-    level_3 = pygame.draw.rect(screen, (0, 51, 51), (250, 210, 130, 40))
+    level_3 = pygame.Rect(250, 210, 130, 40)
+    pygame.draw.rect(screen, GREEN, level_3)
     screen.blit(font.render("Сложный", True, (255, 0, 0)), (260, 220, 100, 40))
-    rules = pygame.draw.rect(screen, (0, 51, 51), (250, 270, 130, 40))
+    rules = pygame.Rect(250, 270, 130, 40)
+    pygame.draw.rect(screen, GREEN, rules)
     screen.blit(font.render("Правила", True, (255, 0, 0)), (260, 280, 100, 40))
-    exit = pygame.draw.rect(screen, (0, 51, 51), (250, 330, 130, 40))
+    exit = pygame.Rect(250, 330, 130, 40)
+    pygame.draw.rect(screen, GREEN, exit)
     screen.blit(font.render("Выход", True, (255, 0, 0)), (275, 340, 100, 40))
+    FPS = 35
+    clock = pygame.time.Clock()
+
+    while True:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if level_1.collidepoint(mouse_pos):
+                    pygame.draw.rect(screen, GREEN, level_1)
+                    pygame.display.flip()
+                    uroven1()
+
+
+                if level_2.collidepoint(mouse_pos):
+                    pygame.draw.rect(screen, GREEN, level_2)
+                    pygame.display.flip()
+
+                if level_3.collidepoint(mouse_pos):
+                    pygame.draw.rect(screen, GREEN, level_3)
+                    pygame.display.flip()
+
+                if rules.collidepoint(mouse_pos):
+                    pygame.draw.rect(screen, GREEN, rules)
+                    pygame.display.flip()
+
+                if exit.collidepoint(mouse_pos):
+                    pygame.quit()
+
+        pygame.display.update()
+        pygame.display.flip()
+
+def uroven1():
+    game = Game()
+    snake = Snake(game.fon)
+    food = Food(game.red, game.screen_width, game.screen_height)
+    game.init_and_check_for_errors()
+    game.set_surface_and_title()
+    while True:
+        snake.change_to = game.event_loop(snake.change_to)
+        snake.validate_direction_and_change()
+        snake.change_head_position()
+        game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
+                                                               game.screen_height)
+        snake.draw_snake(game.play_surface, game.black)
+        food.draw_food(game.play_surface)
+        snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
+        game.show_score()
+        # game.refresh_screen(game.score)
+
+size = width, height = (600, 400)
+screen = pygame.display.set_mode(size)
+pygame.init()
+pygame.mixer.init()
+pygame.mixer.music.load("play.mp3")
+pygame.mixer.music.play()
+pygame.mixer.music.play(loops = -1)
+pygame.mixer.music.get_busy()
+
 
 start_screen()
 while pygame.event.wait().type != pygame.QUIT:
     pygame.display.flip()
 pygame.quit()
 
-
+'''
 game = Game()
-
-'''
-pygame.mixer.init()
-pygame.mixer.pre_init(44100, -16, 2, 2048) # инициализация звуковой системы
-pygame.mixer.music.load("Play.wav")
-pygame.mixer.music.set_volume(0.8)
-pygame.mixer.music.play(-1)
-'''
-
-
-
 snake = Snake(game.fon)
 food = Food(game.red, game.screen_width, game.screen_height)
 game.init_and_check_for_errors()
@@ -176,3 +226,4 @@ while True:
     snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
     game.show_score()
     game.refresh_screen(game.score)
+'''

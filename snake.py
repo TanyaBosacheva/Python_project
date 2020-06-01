@@ -39,11 +39,7 @@ class Game():
                     pygame.quit()
                     sys.exit()
         return change_to
-    '''
-    def refresh_screen(self, score): # задаем фпс
-        pygame.display.flip()
-        game.fps_controller.tick(25)
-    '''
+
     def show_score(self, choice=1): # отображение результата
         s_font = pygame.font.SysFont("calibri", 46)
         s_surf = s_font.render("Score: {0}".format(self.score), True, self.fon)
@@ -69,7 +65,7 @@ class Game():
 
 class Snake():
     def __init__(self, snake_color):
-        self.snake_head_pos = [100, 50]  # [x, y] важные переменные - позиция головы змеи и его тела
+        self.snake_head_pos = [100, 50]  # позиция головы змеи и его тела
         self.snake_body = [[100, 50], [90, 50]] # начальное тело змеи
         self.snake_color = snake_color
         self.direction = "RIGHT" # начальное направление движения
@@ -93,7 +89,7 @@ class Snake():
     def snake_body_mechanism(self, score, food_pos, screen_width, screen_height):
         self.snake_body.insert(0, list(self.snake_head_pos)) # увеличение змеи
         if (self.snake_head_pos[0] == food_pos[0] and  self.snake_head_pos[1] == food_pos[1]): # если съели еду
-            food_pos = [random.randrange(1, screen_width/10)*10, random.randrange(1, screen_height/10)*10]   # если съели еду то задаем новое положение еды случайным
+            food_pos = [random.randrange(1, screen_width / 10) * 10, random.randrange(1, screen_height / 10) * 10]   # если съели еду то задаем новое положение еды случайным
             score += 1
         else:
             self.snake_body.pop() # если не нашли еду, то убираем последний сегмент
@@ -105,12 +101,12 @@ class Snake():
             pygame.draw.rect(play_surface, self.snake_color, pygame.Rect(pos[0], pos[1], 10, 10))
 
     def check_for_boundaries(self, game_over, screen_width, screen_height): # Проверка, что столкунлись с концами экрана или сами с собой
-        if any((self.snake_head_pos[0] > screen_width-10 or self.snake_head_pos[0] < 0, self.snake_head_pos[1] > screen_height - 10 or self.snake_head_pos[1] < 0)):
-            # pygame.mixer.music.stop()
+        if any((self.snake_head_pos[0] > screen_width - 10 or self.snake_head_pos[0] < 0, self.snake_head_pos[1] > screen_height - 10 or self.snake_head_pos[1] < 0)):
+            pygame.mixer.music.stop()
             game_over()
         for block in self.snake_body[1:]:
             if (block[0] == self.snake_head_pos[0] and block[1] == self.snake_head_pos[1]):# проверка на то, что первый элемент(голова) врезался в любой другой элемент змеи (закольцевались)
-                # pygame.mixer.music.stop()
+                pygame.mixer.music.stop()
                 game_over()
 
 class Food():
@@ -118,10 +114,10 @@ class Food():
         self.food_color = food_color
         self.food_size_x = 10
         self.food_size_y = 10
-        self.food_pos = [random.randrange(1, screen_width/10)*10, random.randrange(1, screen_height/10)*10]
+        self.food_pos = [random.randrange(1, screen_width / 10) * 10, random.randrange(1, screen_height / 10) * 10]
 
     def draw_food(self, play_surface): # Отображение еды
-        pygame.draw.rect(play_surface, self.food_color, pygame.Rect(self.food_pos[0], self.food_pos[1],self.food_size_x, self.food_size_y))
+        pygame.draw.rect(play_surface, self.food_color, pygame.Rect(self.food_pos[0], self.food_pos[1], self.food_size_x, self.food_size_y))
 
 def start_screen(): # рисуем заставку
     screen.fill((0, 0, 0))
@@ -145,7 +141,7 @@ def start_screen(): # рисуем заставку
     exit = pygame.Rect(250, 330, 130, 40)
     pygame.draw.rect(screen, GREEN, exit)
     screen.blit(font.render("Выход", True, (255, 0, 0)), (275, 340, 100, 40))
-    FPS = 35
+    FPS = 10
     clock = pygame.time.Clock()
 
     while True:
@@ -158,15 +154,16 @@ def start_screen(): # рисуем заставку
                     pygame.display.flip()
                     uroven1()
 
-
                 if level_2.collidepoint(mouse_pos):
                     pygame.draw.rect(screen, GREEN, level_2)
                     pygame.display.flip()
+                    uroven2()
 
                 if level_3.collidepoint(mouse_pos):
                     pygame.draw.rect(screen, GREEN, level_3)
                     pygame.display.flip()
-
+                    uroven3()
+                    
                 if rules.collidepoint(mouse_pos):
                     pygame.draw.rect(screen, GREEN, rules)
                     pygame.display.flip()
@@ -193,7 +190,43 @@ def uroven1():
         food.draw_food(game.play_surface)
         snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
         game.show_score()
-        # game.refresh_screen(game.score)
+        pygame.display.update()
+
+def uroven2():
+    game = Game()
+    snake = Snake(game.fon)
+    food = Food(game.red, game.screen_width, game.screen_height)
+    game.init_and_check_for_errors()
+    game.set_surface_and_title()
+    while True:
+        snake.change_to = game.event_loop(snake.change_to)
+        snake.validate_direction_and_change()
+        snake.change_head_position()
+        game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
+                                                               game.screen_height)
+        snake.draw_snake(game.play_surface, game.black)
+        food.draw_food(game.play_surface)
+        snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
+        game.show_score()
+        pygame.display.update()
+
+def uroven3():
+    game = Game()
+    snake = Snake(game.fon)
+    food = Food(game.red, game.screen_width, game.screen_height)
+    game.init_and_check_for_errors()
+    game.set_surface_and_title()
+    while True:
+        snake.change_to = game.event_loop(snake.change_to)
+        snake.validate_direction_and_change()
+        snake.change_head_position()
+        game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
+                                                               game.screen_height)
+        snake.draw_snake(game.play_surface, game.black)
+        food.draw_food(game.play_surface)
+        snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
+        game.show_score()
+        pygame.display.update()
 
 size = width, height = (600, 400)
 screen = pygame.display.set_mode(size)
@@ -204,26 +237,7 @@ pygame.mixer.music.play()
 pygame.mixer.music.play(loops = -1)
 pygame.mixer.music.get_busy()
 
-
 start_screen()
 while pygame.event.wait().type != pygame.QUIT:
     pygame.display.flip()
 pygame.quit()
-
-'''
-game = Game()
-snake = Snake(game.fon)
-food = Food(game.red, game.screen_width, game.screen_height)
-game.init_and_check_for_errors()
-game.set_surface_and_title()
-while True:
-    snake.change_to = game.event_loop(snake.change_to)
-    snake.validate_direction_and_change()
-    snake.change_head_position()
-    game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width, game.screen_height)
-    snake.draw_snake(game.play_surface, game.black)
-    food.draw_food(game.play_surface)
-    snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
-    game.show_score()
-    game.refresh_screen(game.score)
-'''

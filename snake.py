@@ -70,8 +70,8 @@ class Game():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = event.pos
                     if restart.collidepoint(mouse_pos):
-                        pygame.display.flip()
                         pygame.mixer.music.unpause()
+                        pygame.display.flip()
                         start_screen()
 
                     if exit.collidepoint(mouse_pos):
@@ -119,7 +119,6 @@ class Snake():
         return score, food_pos
 
     def draw_snake(self, play_surface, surface_color):  # Отображаем все сегменты змеи
-        play_surface.fill(surface_color)
         for pos in self.snake_body:
             pygame.draw.rect(play_surface, self.snake_color, pygame.Rect(pos[0], pos[1], 10, 10))
 
@@ -147,27 +146,30 @@ class Food():
 
 
 def start_screen():  # рисуем заставку
+    size = width, height = (600, 400)
+    screen = pygame.display.set_mode(size)
+    screen.fill((0, 0, 0))
     GREEN = (0, 51, 51)
     pygame.display.set_caption("Game snake")
     image()
     font = pygame.font.SysFont("monaco", 35)
-    screen.blit(font.render("Привет! Давай начнем игру!", True, (0, 191, 255)), (150, 40))
-    pygame.draw.rect(screen, (0, 191, 255), (130, 30, 370, 50), 1)
-    level_1 = pygame.Rect(250, 90, 130, 40)
+    screen.blit(font.render("Привет! Давай начнем игру!", True, (0, 191, 255)), (130, 40))
+    pygame.draw.rect(screen, (0, 191, 255), (115, 30, 370, 50), 1)
+    level_1 = pygame.Rect(235, 90, 130, 40)
     pygame.draw.rect(screen, GREEN, level_1)
-    screen.blit(font.render("Легкий", True, (0, 191, 255)), (275, 100, 100, 40))
-    level_2 = pygame.Rect(250, 150, 130, 40)
+    screen.blit(font.render("Легкий", True, (0, 191, 255)), (260, 100, 100, 40))
+    level_2 = pygame.Rect(235, 150, 130, 40)
     pygame.draw.rect(screen, GREEN, level_2)
-    screen.blit(font.render("Средний", True, (0, 191, 255)), (260, 160, 100, 40))
-    level_3 = pygame.Rect(250, 210, 130, 40)
+    screen.blit(font.render("Средний", True, (0, 191, 255)), (245, 160, 100, 40))
+    level_3 = pygame.Rect(235, 210, 130, 40)
     pygame.draw.rect(screen, GREEN, level_3)
-    screen.blit(font.render("Сложный", True, (0, 191, 255)), (260, 220, 100, 40))
-    rules = pygame.Rect(250, 270, 130, 40)
+    screen.blit(font.render("Сложный", True, (0, 191, 255)), (245, 220, 100, 40))
+    rules = pygame.Rect(235, 270, 130, 40)
     pygame.draw.rect(screen, GREEN, rules)
-    screen.blit(font.render("Правила", True, (0, 191, 255)), (260, 280, 100, 40))
-    exit = pygame.Rect(250, 330, 130, 40)
+    screen.blit(font.render("Правила", True, (0, 191, 255)), (250, 280, 100, 40))
+    exit = pygame.Rect(235, 330, 130, 40)
     pygame.draw.rect(screen, GREEN, exit)
-    screen.blit(font.render("Выход", True, (0, 191, 255)), (275, 340, 100, 40))
+    screen.blit(font.render("Выход", True, (0, 191, 255)), (260, 340, 100, 40))
     while True:
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -201,19 +203,21 @@ def uroven1():
     food = Food(game.red, game.screen_width, game.screen_height)
     game.init_and_check_for_errors()
     game.set_surface_and_title()
+    screen = pygame.display.set_mode((900, 650))
+    clock = pygame.time.Clock()
+    background_image = pygame.image.load("zas1.jpg").convert()
     while True:
         snake.change_to = game.event_loop(snake.change_to)
         snake.validate_direction_and_change()
         snake.change_head_position()
         game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
                                                                game.screen_height)
+        screen.blit(background_image, (0, 0))
         snake.draw_snake(game.play_surface, game.black)
         food.draw_food(game.play_surface)
-        image_1()
         snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
         game.show_score()
         pygame.display.update()
-        clock = pygame.time.Clock()
         clock.tick(20)
 
 
@@ -223,12 +227,16 @@ def uroven2():
     food = Food(game.red, game.screen_width, game.screen_height)
     game.init_and_check_for_errors()
     game.set_surface_and_title()
+    screen = pygame.display.set_mode((900, 650))
+    clock = pygame.time.Clock()
+    background_image = pygame.image.load("zas1.jpg").convert()
     while True:
         snake.change_to = game.event_loop(snake.change_to)
         snake.validate_direction_and_change()
         snake.change_head_position()
         game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
                                                                game.screen_height)
+        screen.blit(background_image, (0, 0))
         snake.draw_snake(game.play_surface, game.black)
         food.draw_food(game.play_surface)
         snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
@@ -313,7 +321,7 @@ def prep():
     level = [
         "------------------------------------------------------------------------------------------",
         "-                                                                      ---               -",
-        "-         ---                                                                            -",
+        "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                ----                    -",
@@ -392,20 +400,11 @@ def prep():
         total_level_height = len(level) * PLATFORM_HEIGHT  # высоту
 
         camera = Camera(camera_configure, total_level_width, total_level_height)
-
     return entities, total_level_width, total_level_height
 
 
 def image():
     fon = pygame.image.load("zas2.jpg")
-    fon_top = screen.get_height() - fon.get_height()
-    fon_left = screen.get_width() / 2 - fon.get_width() / 2
-    screen.blit(fon, (fon_left, fon_top))
-    pygame.display.update()
-
-
-def image_1():
-    fon = pygame.image.load("zas1.jpg")
     fon_top = screen.get_height() - fon.get_height()
     fon_left = screen.get_width() / 2 - fon.get_width() / 2
     screen.blit(fon, (fon_left, fon_top))
@@ -453,7 +452,6 @@ def rules_1():
                     start_screen()
         pygame.display.update()
         pygame.display.flip()
-
 
 size = width, height = (600, 400)
 screen = pygame.display.set_mode(size)

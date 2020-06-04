@@ -53,10 +53,11 @@ class Game():
 
     def game_over(self):  # вывода надписи Game Over и результатов в случае завершения игры и выход из игры
         go_font = pygame.font.SysFont("monaco", 72)
-        go_surf = go_font.render("Game over", True, self.red)
+        go_surf = go_font.render("Game over", True, self.fon)
         go_rect = go_surf.get_rect()
         go_rect.midtop = (450, 15)
         GREEN = (0, 51, 51)
+        self.play_surface = pygame.display.set_mode((self.screen_width, self.screen_height))
         self.play_surface.blit(go_surf, go_rect)
         self.show_score(0)
         restart = pygame.Rect(310, 350, 300, 60)
@@ -92,7 +93,7 @@ class Snake():
         self.direction = "RIGHT"  # начальное направление движения
         self.change_to = self.direction  # куда будет меняться напрвление движения змеи при нажатии соответствующих клавиш
 
-    def validate_direction_and_change(self):  # заменияем направление движения змеи только в том случае, если оно не прямо противоположно текущему
+    def validate_direction_and_change(self):  # меняем направление движения змеи только когда оно не прямо противоположно текущему
         if any((self.change_to == "RIGHT" and not self.direction == "LEFT",
                 self.change_to == "LEFT" and not self.direction == "RIGHT",
                 self.change_to == "UP" and not self.direction == "DOWN",
@@ -109,10 +110,29 @@ class Snake():
         elif self.direction == "DOWN":
             self.snake_head_pos[1] += 10
 
+    def change_head_position3(self, play_surface, score):  # Изменияем положение головы змеи для сложного уровня
+        game = Game()
+        play_surface = play_surface
+        game.score = score
+        if self.direction == "RIGHT":
+            self.snake_head_pos[0] += 10
+        elif self.direction == "LEFT":
+            self.snake_head_pos[0] -= 10
+        elif self.direction == "UP":
+            self.snake_head_pos[1] -= 10
+        elif self.direction == "DOWN":
+            self.snake_head_pos[1] += 10
+        entities, total_level_width, total_level_height, proverka = prep()
+        for i in range(0, len(proverka), 2):
+            if self.snake_head_pos[0] == proverka[i] and self.snake_head_pos[1] == proverka[i + 1] and proverka[
+                i + 1] != 0 and proverka[i + 1] != 650: # проверка на столкновение с препятствиями
+                pygame.mixer.music.pause()
+                game.game_over()
+
     def snake_body_mechanism(self, score, food_pos, screen_width, screen_height):
         self.snake_body.insert(0, list(self.snake_head_pos))  # увеличение змеи
         if (self.snake_head_pos[0] == food_pos[0] and self.snake_head_pos[1] == food_pos[1]):  # если съели еду
-            food_pos = [random.randrange(1, screen_width / 10) * 10, random.randrange(1, screen_height / 10) * 10]  # если съели еду то задаем новое положение еды случайным
+            food_pos = [random.randrange(1, screen_width / 10) * 10, random.randrange(1, screen_height / 10) * 10]  # задаем новое положение еды случайным
             score += 1
         else:
             self.snake_body.pop()  # если не нашли еду, то убираем последний сегмент
@@ -128,7 +148,7 @@ class Snake():
             pygame.mixer.music.pause()
             game_over()
         for block in self.snake_body[1:]:
-            if (block[0] == self.snake_head_pos[0] and block[1] == self.snake_head_pos[1]):  # проверка на то, что первый элемент(голова) врезался в любой другой элемент змеи (закольцевались)
+            if (block[0] == self.snake_head_pos[0] and block[1] == self.snake_head_pos[1]):  # проверка , что голова врезалась в любой другой элемент змеи (закольцевались)
                 pygame.mixer.music.pause()
                 game_over()
 
@@ -136,9 +156,9 @@ class Snake():
 class Food():
     def __init__(self, food_color, screen_width, screen_height):
         self.food_color = food_color
-        self.food_size_x = 10
+        self.food_size_x = 10 # задаем размеры еды
         self.food_size_y = 10
-        self.food_pos = [random.randrange(1, screen_width / 10) * 10, random.randrange(1, screen_height / 10) * 10]
+        self.food_pos = [random.randrange(1, screen_width / 10) * 10, random.randrange(1, screen_height / 10) * 10] # задаем положение еды случайным образом
 
     def draw_food(self, play_surface):  # Отображение еды
         pygame.draw.rect(play_surface, self.food_color,
@@ -252,42 +272,43 @@ def uroven3():
     food = Food(game.red, game.screen_width, game.screen_height)
     game.init_and_check_for_errors()
     game.set_surface_and_title()
-    entities, total_level_width, total_level_height = prep()
+    entities, total_level_width, total_level_height, proverka = prep()
     camera = Camera(camera_configure, total_level_width, total_level_height)
     while True:
         snake.change_to = game.event_loop(snake.change_to)
         snake.validate_direction_and_change()
-        snake.change_head_position()
         game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
                                                                game.screen_height)
+        snake.change_head_position3(game.play_surface, game.score)
+        game.play_surface.fill(game.black)
         snake.draw_snake(game.play_surface, game.black)
         food.draw_food(game.play_surface)
         snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
         game.show_score()
-        for e in entities:
+        for e in entities: # для работы методов камеры update и apply
             screen.blit(e.image, camera.apply(e))
         pygame.display.update()
         clock = pygame.time.Clock()
-        clock.tick(60)
+        clock.tick(50)
 
 
 WIN_WIDTH = 900
 WIN_HEIGHT = 650
 
 
-class Camera(object):
+class Camera(object): # создание динамической камеры
     def __init__(self, camera_func, width, height):
         self.camera_func = camera_func
         self.state = pygame.Rect(0, 0, width, height)
 
-    def apply(self, target):
+    def apply(self, target): # все объекты рисуются в меньшем прямоугольнике
         return target.rect.move(self.state.topleft)
 
-    def update(self, target):
+    def update(self, target): # меньший прямоугольник центрируется относительно змеи
         self.state = self.camera_func(self.state, target.rect)
 
 
-def camera_configure(camera, target_rect):
+def camera_configure(camera, target_rect): # начальное конфигурирование камеры
     l, t, _, _ = target_rect
     _, _, w, h = camera
     l, t = -l + WIN_WIDTH / 2, -t + WIN_HEIGHT / 2
@@ -300,11 +321,11 @@ def camera_configure(camera, target_rect):
     return Rect(l, t, w, h)
 
 
-PLATFORM_WIDTH = 10
+PLATFORM_WIDTH = 10 # задаем размеры блока препятствий
 PLATFORM_HEIGHT = 10
 
 
-class Platform(pygame.sprite.Sprite):
+class Platform(pygame.sprite.Sprite): # создадим класс, наследуясь от pygame.sprite.Sprite
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((PLATFORM_WIDTH, PLATFORM_HEIGHT))
@@ -312,12 +333,17 @@ class Platform(pygame.sprite.Sprite):
         self.rect = pygame.Rect(x, y, PLATFORM_WIDTH, PLATFORM_HEIGHT)
 
 
-def prep():
+def prep(): # создаем карту препятствий
+    game = Game()
+    snake = Snake(game.fon)
     size = width, height = (900, 660)
     screen = pygame.display.set_mode(size)
     bg = pygame.Surface((width, height))
     bg.fill((0, 0, 0))
-    entities = pygame.sprite.Group()  # Все объекты
+    proverka = []
+    proverka1 = []
+    entities = pygame.sprite.Group()  # группа спрайтов entities будем использовать для отображения всех элементов этой группы
+    platforms = [] # то, во что мы будем врезаться
     level = [
         "------------------------------------------------------------------------------------------",
         "-                                                                      ---               -",
@@ -390,20 +416,22 @@ def prep():
     for row in level:  # вся строка
         for col in row:  # каждый символ
             if col == "-":  # создаем блок, заливаем его цветом и рисеум его
-                pf = Platform(x, y)
-                entities.add(pf)
+                pf = Platform(x, y) # создаём экземплр класса Platform
+                entities.add(pf) # добавляем его в группу спрайтов entities
+                proverka.append(x)
+                proverka.append(y)
             x += PLATFORM_WIDTH  # блоки платформы ставятся на ширине блоков
         y += PLATFORM_WIDTH  # то же самое и с высотой
         x = 0  # на каждой новой строчке начинаем с нуля
 
-        total_level_width = len(level[0]) * PLATFORM_WIDTH  # Высчитываем фактическую ширину уровня
+        total_level_width = len(level[0]) * PLATFORM_WIDTH  # высчитываем фактическую ширину уровня
         total_level_height = len(level) * PLATFORM_HEIGHT  # высоту
 
         camera = Camera(camera_configure, total_level_width, total_level_height)
-    return entities, total_level_width, total_level_height
+    return entities, total_level_width, total_level_height, proverka
 
 
-def image():
+def image(): # загрузка фонового изображения для начального экрана и правил
     fon = pygame.image.load("zas2.jpg")
     fon_top = screen.get_height() - fon.get_height()
     fon_left = screen.get_width() / 2 - fon.get_width() / 2
@@ -411,7 +439,7 @@ def image():
     pygame.display.update()
 
 
-def rules_1():
+def rules_1(): # рисуем окно с правилами игры
     size = width, height = (600, 400)
     screen = pygame.display.set_mode(size)
     GREEN = (0, 51, 51)
@@ -453,14 +481,15 @@ def rules_1():
         pygame.display.update()
         pygame.display.flip()
 
+
 size = width, height = (600, 400)
 screen = pygame.display.set_mode(size)
 pygame.init()
 pygame.mixer.init()
 pygame.mixer.music.load("play.mp3")
 pygame.mixer.music.play()
-pygame.mixer.music.play(loops=-1)
-pygame.mixer.music.get_busy()
+pygame.mixer.music.play(loops=-1) # бесконечное проигрывание музыки
+pygame.mixer.music.get_busy() # проверка, что музыка играет
 start_screen()
 while pygame.event.wait().type != pygame.QUIT:
     pygame.display.flip()

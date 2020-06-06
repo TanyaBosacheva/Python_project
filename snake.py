@@ -52,12 +52,19 @@ class Game():
         self.play_surface.blit(s_surf, s_rect)  # рисуем прямоугольник поверх surface
 
     def game_over(self):  # вывода надписи Game Over и результатов в случае завершения игры и выход из игры
+        size = width, height = (900, 650)
+        screen = pygame.display.set_mode(size)
+        fon = pygame.image.load("zas1.jpg")
+        fon_top = screen.get_height() - fon.get_height()
+        fon_left = screen.get_width() / 2 - fon.get_width() / 2
+        screen.blit(fon, (fon_left, fon_top))
+        pygame.display.update()
         go_font = pygame.font.SysFont("monaco", 72)
         go_surf = go_font.render("Game over", True, self.fon)
         go_rect = go_surf.get_rect()
         go_rect.midtop = (450, 15)
         GREEN = (0, 51, 51)
-        self.play_surface = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.play_surface = screen
         self.play_surface.blit(go_surf, go_rect)
         self.show_score(0)
         restart = pygame.Rect(310, 350, 300, 60)
@@ -250,17 +257,21 @@ def uroven2():
     screen = pygame.display.set_mode((900, 650))
     clock = pygame.time.Clock()
     background_image = pygame.image.load("zas1.jpg").convert()
+    entities, total_level_width, total_level_height, proverka = prep()
+    camera = Camera(camera_configure, total_level_width, total_level_height)
     while True:
         snake.change_to = game.event_loop(snake.change_to)
         snake.validate_direction_and_change()
-        snake.change_head_position()
         game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
                                                                game.screen_height)
+        snake.change_head_position3(game.play_surface, game.score)
         screen.blit(background_image, (0, 0))
         snake.draw_snake(game.play_surface, game.black)
         food.draw_food(game.play_surface)
         snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
         game.show_score()
+        for e in entities: # для работы методов камеры update и apply
+            screen.blit(e.image, camera.apply(e))
         pygame.display.update()
         clock = pygame.time.Clock()
         clock.tick(40)
@@ -272,6 +283,9 @@ def uroven3():
     food = Food(game.red, game.screen_width, game.screen_height)
     game.init_and_check_for_errors()
     game.set_surface_and_title()
+    screen = pygame.display.set_mode((900, 650))
+    clock = pygame.time.Clock()
+    background_image = pygame.image.load("zas1.jpg").convert()
     entities, total_level_width, total_level_height, proverka = prep()
     camera = Camera(camera_configure, total_level_width, total_level_height)
     while True:
@@ -280,7 +294,7 @@ def uroven3():
         game.score, food.food_pos = snake.snake_body_mechanism(game.score, food.food_pos, game.screen_width,
                                                                game.screen_height)
         snake.change_head_position3(game.play_surface, game.score)
-        game.play_surface.fill(game.black)
+        screen.blit(background_image, (0, 0))
         snake.draw_snake(game.play_surface, game.black)
         food.draw_food(game.play_surface)
         snake.check_for_boundaries(game.game_over, game.screen_width, game.screen_height)
@@ -289,7 +303,7 @@ def uroven3():
             screen.blit(e.image, camera.apply(e))
         pygame.display.update()
         clock = pygame.time.Clock()
-        clock.tick(50)
+        clock.tick(60)
 
 
 WIN_WIDTH = 900
@@ -350,9 +364,9 @@ def prep(): # создаем карту препятствий
         "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                        -",
-        "-                                                                ----                    -",
-        "--                                                                                       -",
         "-                                                                                        -",
+        "--                                                                                       -",
+        "-                                        ---                                             -",
         "-                                                                                        -",
         "-               ---                                                                      -",
         "-                                                                                        -",
@@ -362,7 +376,7 @@ def prep(): # создаем карту препятствий
         "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                        -",
-        "-                                      ---                                               -",
+        "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                      ---               -",
         "-                                                                                        -",
@@ -371,7 +385,7 @@ def prep(): # создаем карту препятствий
         "-                                                                                        -",
         "--                                                                                       -",
         "-                                                                                        -",
-        "-                                                                                        -",
+        "-                                                        ---                             -",
         "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                        -",
@@ -384,27 +398,27 @@ def prep(): # создаем карту препятствий
         "-     --                                                                                 -",
         "-                                                                                        -",
         "-                                                                                        -",
-        "-                                                                                        -",
+        "-                                  ----                                                  -",
         "-                                                                                        -",
         "-                                                                ----                    -",
         "--                                                                                       -",
         "-                                                                                        -",
         "-                                                                                        -",
-        "-               ---                                                                      -",
         "-                                                                                        -",
-        "-                                                                                        -",
-        "-                                                                                        -",
-        "-                                                                                       --",
-        "-                                         ---                                            -",
-        "-                                                                                        -",
-        "-                                                                                        -",
-        "-                                                                                        -",
-        "-     --                                                          ---                    -",
         "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                       --",
         "-                                         ---                                            -",
+        "-                                                                                        -",
+        "-                                                                                        -",
+        "-                                                                                        -",
+        "-     --                                                                                 -",
+        "-                                                                                        -",
+        "-                                                                                        -",
+        "-                                                                                        -",
+        "-                                                                                       --",
+        "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                        -",
         "-                                                                                        -",
